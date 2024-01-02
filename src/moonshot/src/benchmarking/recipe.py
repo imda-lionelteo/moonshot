@@ -343,11 +343,15 @@ class RecipeResult:
                     )[index]
 
                     # Combine output_responses and targets
-                    metrics_output_responses = [
+                    metrics_prompts = [
+                        prompt_info["prompt"]
+                        for prompt_info in updated_prompt_template_info
+                    ]
+                    metrics_predicted_results = [
                         prompt_info["predicted_result"]
                         for prompt_info in updated_prompt_template_info
                     ]
-                    metrics_output_targets = [
+                    metrics_targets = [
                         prompt_info["target"]
                         for prompt_info in updated_prompt_template_info
                     ]
@@ -357,8 +361,10 @@ class RecipeResult:
                     futures = {
                         executor.submit(
                             metric.get_results,
-                            metrics_output_responses,
-                            metrics_output_targets,
+                            metrics_prompts,
+                            metrics_predicted_results,
+                            metrics_targets,
+                            **{"db_instance": db_instance},
                         )
                         for metric in recipe_instance.metrics_instances
                     }

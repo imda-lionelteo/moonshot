@@ -9,7 +9,7 @@ import os
 import time
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 import aiometer
 from slugify import slugify
@@ -168,7 +168,9 @@ def get_endpoint_names() -> list:
 
 
 def get_predictions(
-    prompts_template_info: dict, connection: Connection, prompt_callback: Callable
+    prompts_template_info: dict,
+    connection: Connection,
+    prompt_callback: Union[Callable, None],
 ) -> list:
     """
     Performs predictions using the prompt. It appends contents of the prompt templates to the prompt first.
@@ -217,7 +219,7 @@ async def get_async_predictions_helper(
     prompt_index: int,
     prompt_info: dict,
     connection: Connection,
-    prompt_callback: Callable,
+    prompt_callback: Union[Callable, None],
 ) -> dict:
     """
     Helper function to asynchronously perform predictions for a given prompt.
@@ -250,7 +252,8 @@ async def get_async_predictions_helper(
         )
 
         # Call prompt callback
-        prompt_callback(prompt_info, connection.id)
+        if prompt_callback:
+            prompt_callback(prompt_info, connection.id)
 
     return prompt_info
 
