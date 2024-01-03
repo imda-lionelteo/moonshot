@@ -10,9 +10,9 @@ import numpy as np
 import spacy
 from sentence_transformers import SentenceTransformer
 
-from src.moonshot.src.common.connection import Connection, get_predictions
-from src.moonshot.src.common.env_variables import EnvironmentVars
-from src.moonshot.src.utils.timeit import timeit
+from moonshot.src.common.connection import Connection, get_predictions
+from moonshot.src.common.env_variables import EnvironmentVars
+from moonshot.src.utils.timeit import timeit
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

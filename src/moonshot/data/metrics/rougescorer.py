@@ -3,7 +3,7 @@ from typing import Any
 
 from rouge_score import rouge_scorer
 
-from src.moonshot.src.utils.timeit import timeit
+from moonshot.src.utils.timeit import timeit
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
