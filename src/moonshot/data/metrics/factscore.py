@@ -116,7 +116,10 @@ class FactScore:
                 length_limit = 10000
 
             if "convert_judgment" in file_info:
-                convert_judgment = file_info["convert_judgment"]
+                if file_info["convert_judgment"] == "true":
+                    convert_judgment = True
+                else:
+                    convert_judgment = False
             else:
                 convert_judgment = False
 
