@@ -232,14 +232,13 @@ class FactScore:
             fact_check_results.append(fact_check_output)
 
             # Compute total facts and total bad facts
-            total_facts += sum(
-                1 for d in fact_check_output if d.get("max_score") is not None
-            )
+            total_facts += sum(1 for d in fact_check_output if d["max_score"])
             total_bad_facts += sum(
                 1
                 for d in fact_check_output
-                if ("decision" not in d)
-                or (d.get("decision") and d["decision"].lower() != "true")
+                if d["max_score"]
+                and d.get("decision")
+                and d["decision"].lower() != "true"
             )
 
         return fact_check_results, total_facts, total_bad_facts
