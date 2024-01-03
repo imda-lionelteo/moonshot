@@ -4,7 +4,7 @@ import json
 import logging
 import re
 import time
-from typing import Any
+from typing import Any, Union
 
 import numpy as np
 import spacy
@@ -83,8 +83,7 @@ class FactScore:
             factscore = FactScore.setup_factscore(predicted_results, prompts)
 
             # Calculate the rouge scores
-            db_instance = kwargs.get("db_instance")
-            output_dict = factscore.compute_factscore(db_instance)
+            output_dict = factscore.compute_factscore()
 
             # Return the final rouge scores dictionary
             return {"factscore": output_dict}
@@ -105,7 +104,7 @@ class FactScore:
             else:
                 file_info = {}
 
-            # Read model endpoint, length limit, reference and candidate key from config
+            # Read model endpoint, length limit, convert_judgment from config
             if "model_endpoint" in file_info:
                 model_endpoint = file_info["model_endpoint"]
             else:
@@ -116,23 +115,31 @@ class FactScore:
             else:
                 length_limit = 10000
 
-            return cls(length_limit, model_endpoint, output_response, targets)
+            if "convert_judgment" in file_info:
+                convert_judgment = file_info["convert_judgment"]
+            else:
+                convert_judgment = False
+
+            return cls(
+                length_limit, model_endpoint, convert_judgment, output_response, targets
+            )
 
     def __init__(
         self,
         length_limit: int = 0,
         model_endpoint: str = "",
+        convert_judgment: bool = False,
         output_response: Any = None,
         targets: Any = None,
     ) -> None:
         self.length_limit = length_limit
         self.model_endpoint = model_endpoint
+        self.convert_judgment = convert_judgment
         self.output_response = output_response
         self.targets = targets
 
         # Load connection from model endpoint
         self.conn_instance = None
-        self.db_instance = None
 
     def extract_facts(self, input_document: str, prompt: str = break_prompt) -> list:
         """
@@ -266,7 +273,9 @@ class FactScore:
             fact_check_output[facts_list[i]["index"]].update(d)
         return fact_check_output
 
-    def compute_factscore_helper(self, reference: str, candidate: str) -> dict:
+    def compute_factscore_helper(
+        self, reference: Union[str, list], candidate: str
+    ) -> dict:
         """
         Compute FactScore for evaluating the factual consistency of generated summary.
 
@@ -278,6 +287,10 @@ class FactScore:
             dict: {'factscore': {'total_facts', 'total_bad_facts', 'factscore', 'run_time', 'revision', 'results'}}
             'results': a list of dict: [{'fact', 'max_score', 'decision', 'reason', 'revision'}]
         """
+        # Check if reference requires conversion
+        if self.convert_judgment:
+            reference = slr_extract_judgment(reference)
+
         # Split the reference document into sentences
         total_start_time = time.perf_counter()
         reference_dict = split_document_to_sentences(reference)
@@ -317,7 +330,7 @@ class FactScore:
         }
 
     @timeit
-    def compute_factscore(self, db_instance: Any) -> dict:
+    def compute_factscore(self) -> dict:
         """
         Compute factscores for an input list of source document and summary pairs
 
@@ -328,7 +341,6 @@ class FactScore:
 
         # Load model endpoint and set db instance
         self.conn_instance = Connection.load_from_json_config(self.model_endpoint)
-        self.db_instance = db_instance
 
         # Log the fact score setup
         logging.debug(f"Loading connection from model endpoint: {self.model_endpoint}")
@@ -337,7 +349,6 @@ class FactScore:
         logging.debug(f"Output response: {self.output_response}")
         logging.debug(f"Targets: {self.targets}")
         logging.debug(f"Connection Instance: {self.conn_instance}")
-        logging.debug(f"DB Instance: {self.db_instance}")
 
         individual_factscore = []
         for index, (reference, candidate) in enumerate(
@@ -561,3 +572,31 @@ def compute_sbert_scores(ref_strs: list, test_strs: list):
         f"Time for similarity computation (SBert): {(end - start):.1f} seconds"
     )
     return scores
+
+
+def slr_extract_judgment(jsondict: list) -> str:
+    """Extract Judgment text from SAL JSON dict data.
+    Output:
+        text string for judgment
+    """
+    output_buf = []
+    for data in jsondict:
+        # Extract header text
+        output_buf.append(data["header"]["text"])
+
+        # Extract paragraph text
+        for parag_data in data["paragraphs"]:
+            if parag_data["paragraph_number"]:
+                output_buf.append(
+                    parag_data["paragraph_number"] + " " + parag_data["text"]
+                )
+            else:
+                output_buf.append(parag_data["text"])
+
+        # Extract table text
+        for table_data in data["tables"]:
+            rows = [row.replace("\t", " | ") for row in table_data]
+            output_buf.append("\n".join(rows))
+
+    text = "\n\n".join(output_buf)
+    return text

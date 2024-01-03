@@ -364,7 +364,6 @@ class RecipeResult:
                             metrics_prompts,
                             metrics_predicted_results,
                             metrics_targets,
-                            **{"db_instance": db_instance},
                         )
                         for metric in recipe_instance.metrics_instances
                     }
