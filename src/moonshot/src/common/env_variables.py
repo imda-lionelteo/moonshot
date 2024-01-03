@@ -68,7 +68,8 @@ def load_env(env_dict: dict = None) -> None:
         "METRICS", os.environ.get("METRICS", "moonshot/data/metrics")
     )
     EnvironmentVars.METRICS_CONFIG = env_dict.get(
-        "METRICS_CONFIG", os.environ.get("METRICS_CONFIG", "metrics_config.json")
+        "METRICS_CONFIG",
+        os.environ.get("METRICS_CONFIG", "moonshot/data/metrics/metrics_config.json"),
     )
     EnvironmentVars.RESULTS = env_dict.get(
         "RESULTS", os.environ.get("RESULTS", "moonshot/data/results")

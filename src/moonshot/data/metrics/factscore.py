@@ -98,9 +98,7 @@ class FactScore:
         """
         Set up the FactScore class.
         """
-        with open(
-            f"{EnvironmentVars.METRICS}/{EnvironmentVars.METRICS_CONFIG}", "r"
-        ) as json_file:
+        with open(f"{EnvironmentVars.METRICS_CONFIG}", "r") as json_file:
             json_file_info = json.load(json_file)
             if __name__ in json_file_info:
                 file_info = json_file_info[__name__]
